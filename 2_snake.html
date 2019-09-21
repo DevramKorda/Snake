@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Snake</title>
+	<style>
+		div#score {
+			position: absolute;
+			top: 3px;
+			left: 320px;
+			color: brown;
+			font-size: 2em;
+		}
+		div#speed {
+			position: absolute;
+			top: 40px;
+			left: 320px;
+			color: brown;
+			font-size: 2em;
+		}		
+	</style>
+</head>
+<body>
+	<div id="score"></div>
+	<div id="speed"></div>
+	<canvas id="canvas" width="300" height="300" style="border: 2px solid brown;"></canvas>
+	<script type="text/javascript">
+
+	//Данные по скорости и счету
+	var view = {
+		displayScore: function(sc) {
+			var score = document.getElementById('score');
+			score.innerHTML = "Счет: " + sc;
+		},
+		displaySpeed: function(rate) {
+			var speed = document.getElementById('speed');
+			speed.innerHTML = "Скорость: " + rate;
+		}
+	};
+	
+	//Переменные
+	var sc = 0; //Счет	
+	var xspd = 0; //Перемещение Змейки на n пикселей (скорость)
+	var yspd = 0;	
+	var xA = 105; //Координаты яблока (переменные постоянные, значения - начальные)
+	var yA = 75;	
+	var appleCoords = []; //Массив координат яблока	
+	var tail = [{x: 75, y: 75}]; //Массив с координатами элементов Змейки
+	// 75=15*5; 105=15*7;	
+	var reLoad; //Переменная для привязывания setInterval	
+	var rate = 300; //Обновление картинки - 1 раз в n миллисекунд
+
+	//Запускаем init при загрузке окна
+	window.onload = init;
+
+	//Запускаем главные функции
+	function init() {
+		canvas = document.getElementById('canvas');
+		context = canvas.getContext('2d');
+		makeAppleCoords();
+		document.addEventListener('keydown', move);
+		anim();
+		updateView();
+	};
+
+	//Анимация
+	function anim() {		
+		reLoad = setInterval(game, rate);
+	};
+
+	//Обновление статуса
+	function updateView() {
+		view.displayScore(sc);
+		view.displaySpeed(rate);
+	};
+
+	//Рассчитываем все возможные варианты координат яблока
+	function makeAppleCoords() {
+		for (var i = 15; i < 261; i+=15) {
+			appleCoords.push(i);
+		}
+	};
+
+	//Главная функция
+	function game() {
+		//Отрисовка всей Змейки
+		context.clearRect(0, 0, canvas.width, canvas.height);
+		context.fillStyle = 'purple';
+
+		for (var i = tail.length - 1; i > -1; i--) {
+
+			//Движение хвоста за головой по нужной траектории
+			if (i !== 0) {
+				tail[i].x = tail[i-1].x;
+				tail[i].y = tail[i-1].y;
+			} else {
+				tail[i].x += xspd;
+				tail[i].y += yspd;				
+			}
+
+			//Прохождение границ канваса
+			if (tail[i].x < 0) {
+				tail[i].x = canvas.width - 15;
+			}
+			if (tail[i].x >= canvas.width) {
+				tail[i].x = 0;
+			}
+			if (tail[i].y < 0) {
+				tail[i].y = canvas.height - 15;
+			}
+			if (tail[i].y >= canvas.height) {
+				tail[i].y = 0;
+			}
+			
+			context.fillRect(tail[i].x, tail[i].y, 14, 14);
+		}
+
+		//Отрисовка яблока, последствия съедания яблока		
+		context.fillStyle = 'orange';
+
+		if (tail[0].x === xA && tail[0].y === yA) {
+			//Увеличение Змейки при съедании яблока
+			tail.push({x: tail[tail.length - 1].x, y: tail[tail.length - 1].y});
+
+			//Рассчет новых координат яблока после съедания
+			xA = appleCoords[Math.floor(Math.random()*appleCoords.length)];
+			yA = appleCoords[Math.floor(Math.random()*appleCoords.length)];
+
+			//Увеличение скорости Змейки при съедании яблока
+			rate -= 7;
+			sc += 1;
+			clearInterval(reLoad);
+			anim();
+			updateView();
+		}
+
+		context.fillRect(xA, yA, 14, 14);
+
+		//Съедание себя
+		for (var i = 2; i < tail.length; i++) {
+			if (tail[0].x === tail[i].x && tail[0].y === tail[i].y) {
+				rate = 300;
+				sc = 0;
+				xspd = 0;
+				yspd = 0;
+				tail = [{x: 75, y: 75}];
+				clearInterval(reLoad);
+				anim();
+				updateView();
+			}
+		}
+	};
+
+	//Регулировка направления движения в зависимости от нажатой клавиши
+	function move(event) {		
+		switch (event.keyCode) {
+			case 38:
+				xspd = 0;
+				yspd = -15; 
+				break;
+
+			case 40:
+				xspd = 0;
+				yspd = 15;
+				break;
+
+			case 37:
+				xspd = -15;
+				yspd = 0;
+				break;
+
+			case 39:
+				xspd = 15;
+				yspd = 0;
+				break;
+		}
+	};
+
+	</script>
+
+</body>
+</html>
